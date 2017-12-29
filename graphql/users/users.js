@@ -1,6 +1,7 @@
 const {
   GraphQLList,
   GraphQLNonNull,
+  GraphQLInt
 } = require('graphql')
 const { internet, random, name } = require('faker')
 const isEmail = require('validator/lib/isEmail')
@@ -13,16 +14,23 @@ const {
 const userQueries = {
   users: {
     type: new GraphQLList(UserType),
-    resolve: async () => {
+    args: {
+      limit: { type: GraphQLInt }
+    },
+    resolve: async (root, args) => {
+      const limit = args.limit || 10
       const users = await new Promise(resolve =>
         setTimeout(() =>
-          resolve(new Array(10).fill(undefined).map(() => ({
+          resolve(new Array(limit).fill(undefined).map(() => ({
             id: random.uuid(),
             email: internet.email(),
             name: name.findName()
           }))), 100),
-      );
-      return users;
+      )
+      if (limit > 10)
+        throw new Error('Limit is limited to max 10');
+
+      return users
     },
   },
 }
